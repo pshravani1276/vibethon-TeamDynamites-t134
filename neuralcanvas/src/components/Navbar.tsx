@@ -62,6 +62,7 @@ export default function Navbar() {
                                 Progress
                             </Link>
                         )}
+
                     </div>
 
                     {/* Auth Buttons */}
