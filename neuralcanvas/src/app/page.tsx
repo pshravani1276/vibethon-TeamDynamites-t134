@@ -12,6 +12,7 @@ export default function Home() {
   const { scrollY } = useScroll();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Background transition values
   const heroBgOpacity = useTransform(scrollY, [0, 300], [1, 0]);
   const gradientBgOpacity = useTransform(scrollY, [100, 400], [0, 1]);
   const heroBgScale = useTransform(scrollY, [0, 300], [1, 0.95]);
@@ -19,7 +20,7 @@ export default function Home() {
   return (
     <div ref={containerRef} className="relative w-full bg-black text-white overflow-x-hidden">
 
-      {/* 3D Video Background */}
+      {/* 3D Video Background - Fades out on scroll */}
       <motion.div
         style={{
           opacity: heroBgOpacity,
@@ -32,7 +33,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/40" />
       </motion.div>
 
-      {/* Gradient Animated Background with Particles */}
+      {/* Gradient Animated Background with Particles - Fades in on scroll */}
       <motion.div
         style={{
           opacity: gradientBgOpacity,
@@ -44,7 +45,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/20" />
       </motion.div>
 
-      {/* Content overlay */}
+      {/* Content overlay - becomes darker as we scroll */}
       <motion.div
         style={{
           backgroundColor: useTransform(scrollY, [0, 500], ["rgba(0,0,0,0.4)", "rgba(0,0,0,0.6)"]),
@@ -60,6 +61,8 @@ export default function Home() {
 
       {/* Content */}
       <div className="relative z-10">
+
+        {/* Hero Section */}
         <Section
           scrollY={scrollY}
           start={0}
@@ -67,12 +70,13 @@ export default function Home() {
           title="Learn AI &amp; ML the Modern Way"
           desc="Interactive, visual, and hands-on learning experience. Master complex concepts through practice, games, and real-world simulations."
           cta={{
-            primary: { text: "🚀 Start Learning →", href: "/dashboard" },
+            primary: { text: "🚀 Start Learning →", href: "/signup" },
             secondary: { text: "🎥 Watch Demo", href: "/demo" }
           }}
           isHero={true}
         />
 
+        {/* Structured Learning Modules */}
         <Section
           scrollY={scrollY}
           start={400}
@@ -92,6 +96,7 @@ export default function Home() {
           ]}
         />
 
+        {/* Interactive Coding Playground */}
         <Section
           scrollY={scrollY}
           start={900}
@@ -107,15 +112,20 @@ export default function Home() {
           demoCode={`# Try this simple ML example
 from sklearn import tree
 
+# Features: [weight, texture]
+# 0 = smooth, 1 = bumpy
 features = [[140, 0], [130, 0], [150, 1], [170, 1]]
 labels = ["apple", "apple", "orange", "orange"]
 
 clf = tree.DecisionTreeClassifier()
 clf.fit(features, labels)
+
+# Predict a new fruit
 result = clf.predict([[160, 1]])
 print(f"Prediction: {result[0]}")`}
         />
 
+        {/* Mini-Games for Concept Learning */}
         <Section
           scrollY={scrollY}
           start={1400}
@@ -131,6 +141,7 @@ print(f"Prediction: {result[0]}")`}
           badges={["🎮 Decision Trees", "🧠 Neural Networks", "📊 Classification", "🎯 Pattern Recognition"]}
         />
 
+        {/* Quiz & Assessment */}
         <Section
           scrollY={scrollY}
           start={1900}
@@ -150,6 +161,7 @@ print(f"Prediction: {result[0]}")`}
           ]}
         />
 
+        {/* Real-World Problem Simulations */}
         <Section
           scrollY={scrollY}
           start={2400}
@@ -167,6 +179,7 @@ print(f"Prediction: {result[0]}")`}
           }}
         />
 
+        {/* Progress Dashboard & Gamification */}
         <Section
           scrollY={scrollY}
           start={2900}
@@ -182,6 +195,7 @@ print(f"Prediction: {result[0]}")`}
           badges={["🔥 Daily Streaks", "⭐ Achievement Badges", "📊 Progress Tracking", "🏅 Leaderboards"]}
         />
 
+        {/* Call to Action */}
         <Section
           scrollY={scrollY}
           start={3400}
@@ -194,6 +208,7 @@ print(f"Prediction: {result[0]}")`}
           }}
           footer={true}
         />
+
       </div>
     </div>
   );
