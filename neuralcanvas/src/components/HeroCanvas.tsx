@@ -16,7 +16,6 @@ export default function HeroCanvas() {
         const totalFrames = 120;
         const images: HTMLImageElement[] = [];
 
-        // Load images
         let loadedImages = 0;
 
         for (let i = 1; i <= totalFrames; i++) {
@@ -26,14 +25,13 @@ export default function HeroCanvas() {
             img.onload = () => {
                 loadedImages++;
                 if (loadedImages === totalFrames) {
-                    renderFrame(0); // initial render
+                    renderFrame(0);
                 }
             };
 
             images.push(img);
         }
 
-        // Resize canvas
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -42,23 +40,20 @@ export default function HeroCanvas() {
         resizeCanvas();
         window.addEventListener("resize", resizeCanvas);
 
-        // Render frame
         const renderFrame = (index: number) => {
             if (!images[index]) return;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(images[index], 0, 0, canvas.width, canvas.height);
         };
 
-        // Scroll animation
         const handleScroll = () => {
             const scrollTop = window.scrollY;
-            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            const maxScroll =
+                document.body.scrollHeight - window.innerHeight;
 
             const scrollFraction = scrollTop / maxScroll;
             const targetFrame = Math.floor(scrollFraction * totalFrames);
 
-            // smooth easing
             currentFrame += (targetFrame - currentFrame) * 0.1;
 
             renderFrame(Math.floor(currentFrame));
