@@ -45,18 +45,14 @@ export default function Navbar() {
                         <Link href="/learn" className="text-gray-300 hover:text-white transition">
                             Learn
                         </Link>
-                        <Link href="/playground" className="text-gray-300 hover:text-white transition">
-                            Playground
-                        </Link>
+
                         <Link href="/games" className="text-gray-300 hover:text-white transition">
                             Games
                         </Link>
                         <Link href="/quiz" className="text-gray-300 hover:text-white transition">
                             Quiz
                         </Link>
-                        <Link href="/simulations" className="text-gray-300 hover:text-white transition">
-                            Simulations
-                        </Link>
+
                         {isLoggedIn && (
                             <Link href="/progress" className="text-gray-300 hover:text-white transition">
                                 Progress
