@@ -15,7 +15,6 @@ interface Game {
     description: string;
     icon: string;
     difficulty: string;
-    color: string;
     href: string;
     bestScore?: number;
 }
@@ -32,17 +31,7 @@ export default function GamesPage() {
             description: "Learn how decision trees work by building your own classification tree!",
             icon: "🌳",
             difficulty: "Beginner",
-            color: "from-green-500 to-emerald-500",
             href: "/games/decision-tree"
-        },
-        {
-            id: "neural-network",
-            title: "Neural Network Visualizer",
-            description: "Understand neural networks by adjusting weights and seeing activations!",
-            icon: "🧠",
-            difficulty: "Intermediate",
-            color: "from-purple-500 to-pink-500",
-            href: "/games/neural-network"
         },
         {
             id: "classification",
@@ -50,8 +39,15 @@ export default function GamesPage() {
             description: "Sort data points using different classification algorithms!",
             icon: "🎯",
             difficulty: "Beginner",
-            color: "from-blue-500 to-cyan-500",
             href: "/games/classification"
+        },
+        {
+            id: "neural-network",
+            title: "Neural Network Visualizer",
+            description: "Understand neural networks by adjusting weights and seeing activations!",
+            icon: "🧠",
+            difficulty: "Intermediate",
+            href: "/games/neural-network"
         },
         {
             id: "pattern-recognition",
@@ -59,7 +55,6 @@ export default function GamesPage() {
             description: "Train an AI to recognize patterns and make predictions!",
             icon: "🔍",
             difficulty: "Advanced",
-            color: "from-orange-500 to-red-500",
             href: "/games/pattern-recognition"
         }
     ];
@@ -73,7 +68,6 @@ export default function GamesPage() {
             }
             setUser(currentUser);
 
-            // Fetch game results
             const { data: results } = await supabase
                 .from("game_results")
                 .select("game_type, score")
@@ -93,10 +87,23 @@ export default function GamesPage() {
         fetchUserAndScores();
     }, [router]);
 
+    const getDifficultyStyle = (difficulty: string) => {
+        switch (difficulty) {
+            case "Beginner":
+                return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+            case "Intermediate":
+                return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+            case "Advanced":
+                return "bg-rose-500/10 text-rose-400 border-rose-500/20";
+            default:
+                return "bg-gray-500/10 text-gray-400 border-gray-500/20";
+        }
+    };
+
     return (
         <div className="relative min-h-screen bg-black text-white">
             <AnimatedBackground />
-            <div className="fixed inset-0 bg-black/40 z-[5]" />
+            <div className="fixed inset-0 bg-black/50 z-[5]" />
             <div className="relative z-20"><Navbar /></div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 pt-24">
@@ -126,7 +133,7 @@ export default function GamesPage() {
                             <div className="text-2xl font-bold text-purple-400">
                                 {Object.keys(gameScores).length}
                             </div>
-                            <div className="text-gray-400">Games Completed</div>
+                            <div className="text-gray-400">Games Played</div>
                         </div>
                         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
                             <div className="text-3xl mb-2">🏆</div>
@@ -137,8 +144,8 @@ export default function GamesPage() {
                         </div>
                     </div>
 
-                    {/* Games Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                    {/* Games Grid - Clean, subtle cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {games.map((game, idx) => (
                             <motion.div
                                 key={game.id}
@@ -147,25 +154,36 @@ export default function GamesPage() {
                                 transition={{ delay: idx * 0.1 }}
                             >
                                 <Link href={game.href}>
-                                    <div className={`bg-gradient-to-br ${game.color} bg-opacity-10 rounded-2xl p-6 border border-white/20 hover:scale-105 transition-all duration-300 cursor-pointer h-full`}>
-                                        <div className="text-6xl mb-4">{game.icon}</div>
-                                        <h3 className="text-2xl font-bold mb-2">{game.title}</h3>
-                                        <p className="text-gray-200 mb-4">{game.description}</p>
-                                        <div className="flex items-center justify-between">
-                                            <span className={`text-xs px-2 py-1 rounded-full ${game.difficulty === "Beginner" ? "bg-green-500/20 text-green-400" :
-                                                    game.difficulty === "Intermediate" ? "bg-yellow-500/20 text-yellow-400" :
-                                                        "bg-red-500/20 text-red-400"
-                                                }`}>
-                                                {game.difficulty}
-                                            </span>
-                                            {gameScores[game.id] && (
-                                                <span className="text-sm text-yellow-400">
-                                                    Best Score: {gameScores[game.id]}
+                                    <div className="group relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-purple-500/30 hover:bg-white/10 transition-all duration-300 cursor-pointer overflow-hidden">
+                                        {/* Subtle gradient overlay on hover */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/5 group-hover:to-pink-600/5 transition-all duration-300" />
+
+                                        <div className="relative z-10">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="text-5xl">{game.icon}</div>
+                                                <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getDifficultyStyle(game.difficulty)}`}>
+                                                    {game.difficulty}
+                                                </div>
+                                            </div>
+
+                                            <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-400 transition-colors">
+                                                {game.title}
+                                            </h3>
+
+                                            <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                                                {game.description}
+                                            </p>
+
+                                            <div className="flex items-center justify-between">
+                                                {gameScores[game.id] && (
+                                                    <span className="text-xs text-yellow-500/70">
+                                                        Best: {gameScores[game.id]} pts
+                                                    </span>
+                                                )}
+                                                <span className="text-purple-400 group-hover:translate-x-1 transition-transform duration-200">
+                                                    Play Now →
                                                 </span>
-                                            )}
-                                        </div>
-                                        <div className="mt-4 flex items-center text-sm text-white/70">
-                                            <span>Play Now →</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </Link>
