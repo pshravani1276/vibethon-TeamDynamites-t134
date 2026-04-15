@@ -704,7 +704,6 @@ export default function AdvancedLearningPage() {
                 .insert({
                     user_id: user.id,
                     module_id: selectedModule,
-                    module_name: module.title,
                     completed: true,
                     points_earned: module.points,
                     completed_at: new Date().toISOString()
