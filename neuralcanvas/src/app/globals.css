@@ -10,7 +10,22 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  --color-nexus-cyan: #06b6d4;
+  --color-nexus-blue: #2563eb;
+  --color-nexus-purple: #9333ea;
 }
+
+@keyframes scan {
+  from { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}
+
+.animate-scan {
+  animation: scan 3s linear infinite;
+}
+
 
 @media (prefers-color-scheme: dark) {
   :root {
