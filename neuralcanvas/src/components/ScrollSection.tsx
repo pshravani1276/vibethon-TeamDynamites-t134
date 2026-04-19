@@ -39,13 +39,13 @@ export default function Section({
     const opacity = useTransform(scrollY, [start, start + 100], [0, 1]);
     const y = useTransform(scrollY, [start, start + 100], [50, 0]);
 
-    const titleSize = isHero ? "text-5xl md:text-7xl lg:text-8xl" : "text-4xl md:text-6xl lg:text-7xl";
-    const descSize = isHero ? "text-xl md:text-2xl lg:text-3xl" : "text-lg md:text-xl lg:text-2xl";
+    const titleSize = isHero ? "text-3xl sm:text-5xl md:text-7xl lg:text-8xl" : "text-2xl sm:text-4xl md:text-6xl lg:text-7xl";
+    const descSize = isHero ? "text-base sm:text-xl md:text-2xl lg:text-3xl" : "text-sm sm:text-lg md:text-xl lg:text-2xl";
 
     return (
         <motion.section
             style={{ opacity, y }}
-            className={`relative z-10 min-h-screen flex flex-col justify-center items-center px-4 py-20 ${isHero ? "pt-32 md:pt-40" : ""
+            className={`relative z-10 min-h-screen flex flex-col justify-center items-center px-3 sm:px-4 py-16 sm:py-20 ${isHero ? "pt-24 sm:pt-32 md:pt-40" : ""
                 }`}
         >
             <div className="max-w-6xl w-full mx-auto">
@@ -64,7 +64,7 @@ export default function Section({
 
                 {/* Features Grid */}
                 {features && features.length > 0 && (
-                    <div className="grid md:grid-cols-2 gap-4 mb-12">
+                    <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 mb-8 sm:mb-12">
                         {features.map((feature, idx) => (
                             <motion.div
                                 key={idx}
@@ -83,7 +83,7 @@ export default function Section({
 
                 {/* Stats */}
                 {stats && stats.length > 0 && (
-                    <div className="flex justify-center gap-8 md:gap-12 mb-12 flex-wrap">
+                    <div className="flex justify-center gap-4 sm:gap-8 md:gap-12 mb-8 sm:mb-12 flex-wrap">
                         {stats.map((stat, idx) => (
                             <motion.div
                                 key={idx}
@@ -104,7 +104,7 @@ export default function Section({
 
                 {/* Badges */}
                 {badges && badges.length > 0 && (
-                    <div className="flex justify-center gap-3 mb-12 flex-wrap">
+                    <div className="flex justify-center gap-2 sm:gap-3 mb-8 sm:mb-12 flex-wrap">
                         {badges.map((badge, idx) => (
                             <motion.span
                                 key={idx}
@@ -112,7 +112,7 @@ export default function Section({
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: idx * 0.05 }}
                                 viewport={{ once: true }}
-                                className="px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full text-sm md:text-base text-purple-300 border border-purple-500/20 font-medium"
+                                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/5 backdrop-blur-sm rounded-full text-xs sm:text-sm md:text-base text-purple-300 border border-purple-500/20 font-medium"
                             >
                                 {badge}
                             </motion.span>
@@ -161,12 +161,12 @@ export default function Section({
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="flex justify-center gap-4 flex-wrap"
+                        className="flex justify-center gap-3 sm:gap-4 flex-wrap"
                     >
                         {cta.primary && (
                             <Link
                                 href={cta.primary.href}
-                                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-full font-semibold text-white transition-all duration-300 shadow-lg hover:shadow-purple-500/25 text-base md:text-lg"
+                                className="px-5 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-full font-semibold text-white transition-all duration-300 shadow-lg hover:shadow-purple-500/25 text-sm sm:text-base md:text-lg"
                             >
                                 {cta.primary.text}
                             </Link>
@@ -174,7 +174,7 @@ export default function Section({
                         {cta.secondary && (
                             <Link
                                 href={cta.secondary.href}
-                                className="px-8 py-3 border-2 border-gray-500 hover:border-purple-400 rounded-full font-semibold text-gray-200 hover:text-purple-400 transition-all duration-300 text-base md:text-lg"
+                                className="px-5 sm:px-8 py-2.5 sm:py-3 border-2 border-gray-500 hover:border-purple-400 rounded-full font-semibold text-gray-200 hover:text-purple-400 transition-all duration-300 text-sm sm:text-base md:text-lg"
                             >
                                 {cta.secondary.text}
                             </Link>

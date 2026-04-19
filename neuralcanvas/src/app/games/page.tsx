@@ -106,36 +106,36 @@ export default function GamesPage() {
             <div className="fixed inset-0 bg-black/50 z-[5]" />
             <div className="relative z-20"><Navbar /></div>
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 pt-24">
+            <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-8 pt-20 sm:pt-24">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
                     {/* Header */}
-                    <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+                    <div className="text-center mb-8 sm:mb-12">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-3 sm:mb-4">
                             Learn Through Play
                         </h1>
-                        <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+                        <p className="text-gray-300 text-sm sm:text-lg max-w-2xl mx-auto">
                             Interactive games that make complex AI/ML concepts fun and easy to understand
                         </p>
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
+                    <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-8 sm:mb-12">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-6 text-center border border-white/10">
                             <div className="text-3xl mb-2">🎮</div>
                             <div className="text-2xl font-bold text-purple-400">{games.length}</div>
                             <div className="text-gray-400">Available Games</div>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-6 text-center border border-white/10">
                             <div className="text-3xl mb-2">⭐</div>
                             <div className="text-2xl font-bold text-purple-400">
                                 {Object.keys(gameScores).length}
                             </div>
                             <div className="text-gray-400">Games Played</div>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-6 text-center border border-white/10">
                             <div className="text-3xl mb-2">🏆</div>
                             <div className="text-2xl font-bold text-purple-400">
                                 {Object.values(gameScores).reduce((a, b) => a + b, 0)}
@@ -145,7 +145,7 @@ export default function GamesPage() {
                     </div>
 
                     {/* Games Grid - Clean, subtle cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         {games.map((game, idx) => (
                             <motion.div
                                 key={game.id}
@@ -154,19 +154,19 @@ export default function GamesPage() {
                                 transition={{ delay: idx * 0.1 }}
                             >
                                 <Link href={game.href}>
-                                    <div className="group relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-purple-500/30 hover:bg-white/10 transition-all duration-300 cursor-pointer overflow-hidden">
+                                    <div className="group relative bg-white/5 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/10 hover:border-purple-500/30 hover:bg-white/10 transition-all duration-300 cursor-pointer overflow-hidden">
                                         {/* Subtle gradient overlay on hover */}
                                         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/5 group-hover:to-pink-600/5 transition-all duration-300" />
 
                                         <div className="relative z-10">
                                             <div className="flex items-start justify-between mb-4">
-                                                <div className="text-5xl">{game.icon}</div>
+                                                <div className="text-3xl sm:text-5xl">{game.icon}</div>
                                                 <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getDifficultyStyle(game.difficulty)}`}>
                                                     {game.difficulty}
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-2xl font-bold mb-2 group-hover:text-purple-400 transition-colors">
+                                            <h3 className="text-lg sm:text-2xl font-bold mb-2 group-hover:text-purple-400 transition-colors">
                                                 {game.title}
                                             </h3>
 

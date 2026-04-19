@@ -1,100 +1,101 @@
-// src/app/leaderboard/page.tsx
+// src/app/badge/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { supabase } from "@/lib/supabaseClient";
 
-interface LeaderboardEntry {
-    user_id: string;
-    email: string;
-    full_name: string;
-    total_score: number;
-    quiz_count: number;
-    badge_count: number;
+interface Badge {
+    id: string;
+    name: string;
+    icon: string;
+    description: string;
+    category: string;
+    requirement: string;
+    earned: boolean;
+    earnedDate?: string;
+    rarity: "common" | "rare" | "epic" | "legendary";
 }
 
-export default function LeaderboardPage() {
-    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+export default function BadgePage() {
+    const router = useRouter();
     const [loading, setLoading] = useState(true);
-    const [userRank, setUserRank] = useState<number | null>(null);
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
+    const [filterCategory, setFilterCategory] = useState<string>("all");
+
+    const allBadges: Badge[] = [
+        // Learning Badges
+        { id: "first-step", name: "First Step", icon: "🌱", description: "Complete your first module", category: "Learning", requirement: "Complete 1 module", earned: false, rarity: "common" },
+        { id: "fast-learner", name: "Fast Learner", icon: "⚡", description: "Complete 3 modules", category: "Learning", requirement: "Complete 3 modules", earned: false, rarity: "common" },
+        { id: "knowledge-seeker", name: "Knowledge Seeker", icon: "📚", description: "Complete all beginner modules", category: "Learning", requirement: "Complete beginner level", earned: false, rarity: "rare" },
+        { id: "ml-explorer", name: "ML Explorer", icon: "🚀", description: "Complete all intermediate modules", category: "Learning", requirement: "Complete intermediate level", earned: false, rarity: "epic" },
+        { id: "ai-master", name: "AI Master", icon: "🧠", description: "Complete all advanced modules", category: "Learning", requirement: "Complete advanced level", earned: false, rarity: "legendary" },
+        // Quiz Badges
+        { id: "quiz-whiz", name: "Quiz Whiz", icon: "📝", description: "Score 80%+ on any quiz", category: "Quiz", requirement: "Score 80%+ on a quiz", earned: false, rarity: "common" },
+        { id: "perfect-score", name: "Perfect Score", icon: "💯", description: "Score 100% on any quiz", category: "Quiz", requirement: "Score 100% on a quiz", earned: false, rarity: "epic" },
+        { id: "quiz-champion", name: "Quiz Champion", icon: "🏅", description: "Complete 10 quizzes", category: "Quiz", requirement: "Complete 10 quizzes", earned: false, rarity: "rare" },
+        // Game Badges
+        { id: "game-explorer", name: "Game Explorer", icon: "🎮", description: "Play your first game", category: "Games", requirement: "Play 1 game", earned: false, rarity: "common" },
+        { id: "decision-tree-pro", name: "Decision Tree Pro", icon: "🌳", description: "Master the Decision Tree game", category: "Games", requirement: "Score 100+ on Decision Tree", earned: false, rarity: "rare" },
+        { id: "neural-ninja", name: "Neural Ninja", icon: "🧠", description: "Master the Neural Network game", category: "Games", requirement: "Score 100+ on Neural Network", earned: false, rarity: "epic" },
+        // Streak Badges
+        { id: "3-day-streak", name: "3-Day Streak", icon: "🔥", description: "Maintain a 3-day learning streak", category: "Streak", requirement: "3-day streak", earned: false, rarity: "common" },
+        { id: "7-day-streak", name: "7-Day Streak", icon: "🔥", description: "Maintain a 7-day learning streak", category: "Streak", requirement: "7-day streak", earned: false, rarity: "rare" },
+        { id: "30-day-streak", name: "30-Day Streak", icon: "💎", description: "Maintain a 30-day learning streak", category: "Streak", requirement: "30-day streak", earned: false, rarity: "legendary" },
+        // Social Badges
+        { id: "top-10", name: "Top 10", icon: "🏆", description: "Reach top 10 on the leaderboard", category: "Social", requirement: "Reach top 10", earned: false, rarity: "epic" },
+        { id: "code-master", name: "Code Master", icon: "💻", description: "Run 20 code snippets in playground", category: "Social", requirement: "Run 20 code snippets", earned: false, rarity: "rare" },
+    ];
 
     useEffect(() => {
-        const fetchLeaderboard = async () => {
+        const fetchBadges = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-            setCurrentUser(user);
+            if (!user) {
+                router.push("/login");
+                return;
+            }
 
-            // Get quiz scores with user profiles
-            const { data: quizData } = await supabase
-                .from("quiz_scores")
-                .select(`
-          score,
-          user_id,
-          profiles!inner (
-            full_name,
-            email
-          )
-        `);
+            const { data: userBadges } = await supabase
+                .from("user_badges")
+                .select("badge_id, earned_at")
+                .eq("user_id", user.id);
 
-            if (quizData) {
-                // Aggregate scores by user
-                const userScores: { [key: string]: LeaderboardEntry } = {};
-
-                quizData.forEach((item: any) => {
-                    if (!userScores[item.user_id]) {
-                        userScores[item.user_id] = {
-                            user_id: item.user_id,
-                            email: item.profiles.email,
-                            full_name: item.profiles.full_name || item.profiles.email.split("@")[0],
-                            total_score: 0,
-                            quiz_count: 0,
-                            badge_count: 0,
-                        };
-                    }
-                    userScores[item.user_id].total_score += item.score || 0;
-                    userScores[item.user_id].quiz_count += 1;
-                });
-
-                // Get badge counts
-                const { data: badgeData } = await supabase
-                    .from("user_badges")
-                    .select("user_id");
-
-                if (badgeData) {
-                    badgeData.forEach((item: any) => {
-                        if (userScores[item.user_id]) {
-                            userScores[item.user_id].badge_count += 1;
-                        }
-                    });
-                }
-
-                // Convert to array and sort by total score
-                const leaderboardArray = Object.values(userScores).sort(
-                    (a, b) => b.total_score - a.total_score
-                );
-
-                setLeaderboard(leaderboardArray);
-
-                // Find current user's rank
-                if (user) {
-                    const rank = leaderboardArray.findIndex(entry => entry.user_id === user.id) + 1;
-                    setUserRank(rank > 0 ? rank : null);
-                }
+            if (userBadges) {
+                setEarnedBadgeIds(userBadges.map((b: any) => b.badge_id));
             }
 
             setLoading(false);
         };
 
-        fetchLeaderboard();
-    }, []);
+        fetchBadges();
+    }, [router]);
+
+    const badges = allBadges.map(badge => ({
+        ...badge,
+        earned: earnedBadgeIds.includes(badge.id),
+    }));
+
+    const categories = ["all", ...Array.from(new Set(allBadges.map(b => b.category)))];
+    const filteredBadges = filterCategory === "all" ? badges : badges.filter(b => b.category === filterCategory);
+    const earnedCount = badges.filter(b => b.earned).length;
+
+    const getRarityStyle = (rarity: string) => {
+        switch (rarity) {
+            case "common": return { border: "border-gray-500/30", bg: "bg-gray-500/5", text: "text-gray-400", label: "Common" };
+            case "rare": return { border: "border-blue-500/30", bg: "bg-blue-500/5", text: "text-blue-400", label: "Rare" };
+            case "epic": return { border: "border-purple-500/30", bg: "bg-purple-500/5", text: "text-purple-400", label: "Epic" };
+            case "legendary": return { border: "border-yellow-500/30", bg: "bg-yellow-500/5", text: "text-yellow-400", label: "Legendary" };
+            default: return { border: "border-gray-500/30", bg: "bg-gray-500/5", text: "text-gray-400", label: "Common" };
+        }
+    };
 
     if (loading) {
         return (
             <div className="relative min-h-screen bg-black flex items-center justify-center">
-                <div className="text-white">Loading leaderboard...</div>
+                <div className="text-white text-xl">Loading badges...</div>
             </div>
         );
     }
@@ -105,90 +106,96 @@ export default function LeaderboardPage() {
             <div className="fixed inset-0 bg-black/40 z-[5]" />
             <div className="relative z-20"><Navbar /></div>
 
-            <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 pt-24">
+            <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-8 pt-20 sm:pt-24">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
-                    <div className="text-center mb-12">
-                        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
-                            Global Leaderboard
+                    {/* Header */}
+                    <div className="text-center mb-6 sm:mb-10">
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2 sm:mb-4">
+                            Achievement Badges
                         </h1>
-                        <p className="text-gray-300">Top learners ranked by total points</p>
-                        {userRank && (
-                            <div className="inline-block mt-4 px-6 py-2 bg-purple-500/20 rounded-full border border-purple-500/30">
-                                <span className="text-purple-400">🏆 Your Rank: #{userRank}</span>
-                            </div>
-                        )}
+                        <p className="text-gray-300 text-sm sm:text-lg max-w-2xl mx-auto">
+                            Earn badges by completing challenges, quizzes, and reaching milestones
+                        </p>
                     </div>
 
-                    {/* Top 3 Podium */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                        {leaderboard.slice(0, 3).map((entry, idx) => (
+                    {/* Progress Bar */}
+                    <div className="bg-white/5 rounded-xl p-4 sm:p-6 border border-white/10 mb-6 sm:mb-8">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
+                            <span className="text-sm sm:text-base font-semibold">Badge Collection</span>
+                            <span className="text-purple-400 text-sm sm:text-base font-bold">{earnedCount}/{badges.length}</span>
+                        </div>
+                        <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
                             <motion.div
-                                key={entry.user_id}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: idx * 0.1 }}
-                                className={`text-center p-6 rounded-xl border ${idx === 0 ? "bg-yellow-500/20 border-yellow-500/50" :
-                                        idx === 1 ? "bg-gray-400/20 border-gray-400/50" :
-                                            "bg-orange-500/20 border-orange-500/50"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(earnedCount / badges.length) * 100}%` }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                                className="h-full bg-gradient-to-r from-yellow-500 via-purple-500 to-pink-500 rounded-full"
+                            />
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-3 sm:mt-4 text-xs sm:text-sm text-gray-400">
+                            <span>🟡 Common: {badges.filter(b => b.rarity === "common" && b.earned).length}/{badges.filter(b => b.rarity === "common").length}</span>
+                            <span>🔵 Rare: {badges.filter(b => b.rarity === "rare" && b.earned).length}/{badges.filter(b => b.rarity === "rare").length}</span>
+                            <span>🟣 Epic: {badges.filter(b => b.rarity === "epic" && b.earned).length}/{badges.filter(b => b.rarity === "epic").length}</span>
+                            <span>🌟 Legendary: {badges.filter(b => b.rarity === "legendary" && b.earned).length}/{badges.filter(b => b.rarity === "legendary").length}</span>
+                        </div>
+                    </div>
+
+                    {/* Category Filter */}
+                    <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setFilterCategory(cat)}
+                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium capitalize transition-all ${filterCategory === cat
+                                    ? "bg-purple-600 text-white"
+                                    : "bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10"
                                     }`}
                             >
-                                <div className="text-5xl mb-2">
-                                    {idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉"}
-                                </div>
-                                <div className="text-2xl font-bold">{entry.full_name}</div>
-                                <div className="text-purple-400 text-xl mt-2">{entry.total_score} pts</div>
-                                <div className="text-sm text-gray-400 mt-2">
-                                    {entry.quiz_count} quizzes • {entry.badge_count} badges
-                                </div>
-                            </motion.div>
+                                {cat}
+                            </button>
                         ))}
                     </div>
 
-                    {/* Full Leaderboard Table */}
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-white/10 border-b border-white/10">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">Rank</th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold">User</th>
-                                        <th className="px-6 py-4 text-center text-sm font-semibold">Quizzes</th>
-                                        <th className="px-6 py-4 text-center text-sm font-semibold">Badges</th>
-                                        <th className="px-6 py-4 text-right text-sm font-semibold">Points</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {leaderboard.map((entry, idx) => (
-                                        <motion.tr
-                                            key={entry.user_id}
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ delay: idx * 0.02 }}
-                                            className={`border-b border-white/5 hover:bg-white/5 transition-all ${currentUser?.id === entry.user_id ? "bg-purple-500/20" : ""
-                                                }`}
-                                        >
-                                            <td className="px-6 py-4 text-sm">
-                                                {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div>
-                                                    <div className="font-semibold">{entry.full_name}</div>
-                                                    <div className="text-xs text-gray-500">{entry.email}</div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center text-sm">{entry.quiz_count}</td>
-                                            <td className="px-6 py-4 text-center text-sm">{entry.badge_count}</td>
-                                            <td className="px-6 py-4 text-right text-sm font-bold text-purple-400">
-                                                {entry.total_score}
-                                            </td>
-                                        </motion.tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                    {/* Badges Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                        {filteredBadges.map((badge, idx) => {
+                            const rarity = getRarityStyle(badge.rarity);
+                            return (
+                                <motion.div
+                                    key={badge.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.05 }}
+                                    className={`relative rounded-xl sm:rounded-2xl p-3 sm:p-5 border transition-all ${badge.earned
+                                        ? `${rarity.border} ${rarity.bg} hover:scale-[1.02]`
+                                        : "border-white/5 bg-white/[0.02] opacity-50"
+                                        }`}
+                                >
+                                    {badge.earned && badge.rarity === "legendary" && (
+                                        <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 animate-pulse" />
+                                    )}
+                                    <div className="relative z-10 text-center">
+                                        <div className={`text-3xl sm:text-5xl mb-2 sm:mb-3 ${badge.earned ? "" : "grayscale"}`}>
+                                            {badge.icon}
+                                        </div>
+                                        <div className="font-bold text-xs sm:text-sm mb-1">{badge.name}</div>
+                                        <div className="text-[10px] sm:text-xs text-gray-400 mb-2 leading-relaxed line-clamp-2">{badge.description}</div>
+                                        <span className={`inline-block text-[10px] sm:text-xs px-2 py-0.5 rounded-full border ${rarity.border} ${rarity.text}`}>
+                                            {rarity.label}
+                                        </span>
+                                        {badge.earned && (
+                                            <div className="mt-2 text-[10px] sm:text-xs text-green-400">✅ Earned</div>
+                                        )}
+                                        {!badge.earned && (
+                                            <div className="mt-2 text-[10px] sm:text-xs text-gray-600">{badge.requirement}</div>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 </motion.div>
             </div>

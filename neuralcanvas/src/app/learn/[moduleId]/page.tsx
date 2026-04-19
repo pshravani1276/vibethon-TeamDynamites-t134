@@ -3,441 +3,150 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { supabase } from "@/lib/supabaseClient";
-
-interface ModuleContent {
-    id: number;
-    title: string;
-    description: string;
-    content: string;
-    duration: string;
-    level: string;
-    points: number;
-    codeExample?: string;
-    quizQuestions?: {
-        question: string;
-        options: string[];
-        correct: number;
-    }[];
-}
+import { modules as allModules, Module, QuizQuestion } from "@/lib/data/modules";
+import { ChevronLeft, ChevronRight, CheckCircle2, Layout, BookOpen, Clock, Star, Code2, AlertCircle, HelpCircle, X, Check, ArrowRight } from "lucide-react";
+import { useToast } from "@/components/Toast";
 
 export default function ModuleDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const { addToast } = useToast();
     const moduleId = parseInt(params.moduleId as string);
 
     const [user, setUser] = useState<any>(null);
-    const [module, setModule] = useState<ModuleContent | null>(null);
+    const [module, setModule] = useState<Module | null>(null);
     const [completed, setCompleted] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
 
-    // Module data for all 19 modules
-    const modulesData: Record<number, ModuleContent> = {
-        // Beginner Modules (1-5)
-        1: {
-            id: 1,
-            title: "What is Artificial Intelligence?",
-            description: "Understand the basics of AI and its applications",
-            content: `
-        Artificial Intelligence (AI) is the simulation of human intelligence in machines.
-        
-        Key Concepts:
-        • Machine Learning: Systems that learn from data
-        • Deep Learning: Neural networks with multiple layers
-        • Natural Language Processing: Understanding human language
-        • Computer Vision: Interpreting visual information
-        
-        Real-world applications include:
-        • Virtual assistants (Siri, Alexa)
-        • Recommendation systems (Netflix, Amazon)
-        • Self-driving cars
-        • Medical diagnosis
-      `,
-            duration: "15 min",
-            level: "Beginner",
-            points: 50,
-            codeExample: `# Simple AI example
-import random
-
-responses = {
-    "hello": "Hi there! How can I help you?",
-    "how are you": "I'm doing great, thanks for asking!",
-}
-
-def chatbot(message):
-    return responses.get(message.lower(), "I don't understand that yet.")
-    
-print(chatbot("hello"))`
-        },
-        2: {
-            id: 2,
-            title: "Introduction to Machine Learning",
-            description: "Learn what Machine Learning is and how it works",
-            content: `
-        Machine Learning is a subset of AI that enables systems to learn from data.
-        
-        Traditional Programming vs ML:
-        • Traditional: Input + Rules = Output
-        • ML: Input + Output = Rules
-        
-        The ML Process:
-        1. Collect data
-        2. Prepare data
-        3. Choose a model
-        4. Train the model
-        5. Evaluate
-        6. Make predictions
-      `,
-            duration: "20 min",
-            level: "Beginner",
-            points: 50,
-            codeExample: `# Simple ML example
-from sklearn import tree
-
-# Features: [weight, texture]
-# 0 = smooth, 1 = bumpy
-features = [[140, 0], [130, 0], [150, 1], [170, 1]]
-labels = ["apple", "apple", "orange", "orange"]
-
-clf = tree.DecisionTreeClassifier()
-clf.fit(features, labels)
-print(clf.predict([[160, 1]]))`
-        },
-        3: {
-            id: 3,
-            title: "Types of Machine Learning",
-            description: "Explore Supervised, Unsupervised, and Reinforcement Learning",
-            content: `
-        Three Main Types of ML:
-        
-        1. Supervised Learning - Learns from labeled data
-        2. Unsupervised Learning - Finds patterns in unlabeled data
-        3. Reinforcement Learning - Learns through trial and error
-      `,
-            duration: "25 min",
-            level: "Beginner",
-            points: 75,
-        },
-        4: {
-            id: 4,
-            title: "Python Basics for ML",
-            description: "Essential Python concepts for Machine Learning",
-            content: `
-        Essential Python Libraries for ML:
-        
-        1. NumPy - Numerical computing
-        2. Pandas - Data manipulation
-        3. Matplotlib - Data visualization
-        4. Scikit-learn - Machine Learning algorithms
-      `,
-            duration: "30 min",
-            level: "Beginner",
-            points: 100,
-        },
-        5: {
-            id: 5,
-            title: "Your First ML Model",
-            description: "Build a simple linear regression model",
-            content: `
-        Building a Linear Regression Model:
-        
-        Step 1: Import libraries
-        Step 2: Create data
-        Step 3: Train model
-        Step 4: Make predictions
-      `,
-            duration: "35 min",
-            level: "Beginner",
-            points: 100,
-        },
-        // Intermediate Modules (6-11)
-        6: {
-            id: 6,
-            title: "Data Preprocessing & Cleaning",
-            description: "Prepare raw data for machine learning",
-            content: `
-        Data preprocessing steps:
-        1. Handle missing values
-        2. Remove outliers
-        3. Scale features
-        4. Encode categorical variables
-      `,
-            duration: "35 min",
-            level: "Intermediate",
-            points: 100,
-        },
-        7: {
-            id: 7,
-            title: "Feature Engineering",
-            description: "Create meaningful features from raw data",
-            content: `
-        Feature engineering techniques:
-        • Create interaction features
-        • Add polynomial features
-        • Extract date components
-        • Bin continuous variables
-      `,
-            duration: "40 min",
-            level: "Intermediate",
-            points: 120,
-        },
-        8: {
-            id: 8,
-            title: "Linear Regression Deep Dive",
-            description: "Master linear regression and its variants",
-            content: `
-        Linear regression formula: y = β₀ + β₁x₁ + ... + βₙxₙ
-        
-        Assumptions:
-        1. Linearity
-        2. Independence
-        3. Homoscedasticity
-        4. Normality
-      `,
-            duration: "45 min",
-            level: "Intermediate",
-            points: 150,
-        },
-        9: {
-            id: 9,
-            title: "Logistic Regression & Classification",
-            description: "Learn binary and multi-class classification",
-            content: `
-        Logistic regression uses sigmoid function to output probabilities.
-        
-        Evaluation metrics:
-        • Accuracy
-        • Precision
-        • Recall
-        • F1-Score
-      `,
-            duration: "45 min",
-            level: "Intermediate",
-            points: 150,
-        },
-        10: {
-            id: 10,
-            title: "Decision Trees & Random Forests",
-            description: "Build powerful tree-based models",
-            content: `
-        Decision trees split data based on feature values.
-        
-        Random Forest combines multiple trees:
-        • Reduces overfitting
-        • Provides feature importance
-      `,
-            duration: "50 min",
-            level: "Intermediate",
-            points: 150,
-        },
-        11: {
-            id: 11,
-            title: "Model Evaluation & Validation",
-            description: "Assess model performance and avoid overfitting",
-            content: `
-        Validation techniques:
-        • Train-test split
-        • Cross-validation
-        • Learning curves
-      `,
-            duration: "40 min",
-            level: "Intermediate",
-            points: 120,
-        },
-        // Advanced Modules (12-19)
-        12: {
-            id: 12,
-            title: "Neural Networks Fundamentals",
-            description: "Understand neural network architecture",
-            content: `
-        Neural network components:
-        • Input layer
-        • Hidden layers
-        • Output layer
-        • Activation functions
-        • Weights and biases
-      `,
-            duration: "60 min",
-            level: "Advanced",
-            points: 200,
-        },
-        13: {
-            id: 13,
-            title: "Convolutional Neural Networks (CNN)",
-            description: "Master CNNs for image recognition",
-            content: `
-        CNN layers:
-        • Convolutional layers
-        • Pooling layers
-        • Flatten layer
-        • Dense layers
-      `,
-            duration: "75 min",
-            level: "Advanced",
-            points: 250,
-        },
-        14: {
-            id: 14,
-            title: "Recurrent Neural Networks (RNN) & LSTM",
-            description: "Learn sequence models for time series",
-            content: `
-        RNNs maintain memory through hidden states.
-        LSTM solves the vanishing gradient problem with gates.
-      `,
-            duration: "75 min",
-            level: "Advanced",
-            points: 250,
-        },
-        15: {
-            id: 15,
-            title: "Transformers & Attention Mechanism",
-            description: "Explore modern LLM architecture",
-            content: `
-        Transformers use self-attention instead of recurrence.
-        
-        Components:
-        • Multi-head attention
-        • Positional encoding
-        • Feed-forward networks
-      `,
-            duration: "90 min",
-            level: "Advanced",
-            points: 300,
-        },
-        16: {
-            id: 16,
-            title: "Model Optimization & Hyperparameter Tuning",
-            description: "Advanced optimization techniques",
-            content: `
-        Optimization methods:
-        • Grid search
-        • Random search
-        • Bayesian optimization
-        • Learning rate scheduling
-      `,
-            duration: "60 min",
-            level: "Advanced",
-            points: 200,
-        },
-        17: {
-            id: 17,
-            title: "MLOps & Model Deployment",
-            description: "Deploy and monitor ML models",
-            content: `
-        MLOps practices:
-        • Model versioning
-        • CI/CD for ML
-        • Model monitoring
-        • Automated retraining
-      `,
-            duration: "90 min",
-            level: "Advanced",
-            points: 300,
-        },
-        18: {
-            id: 18,
-            title: "Generative AI & GANs",
-            description: "Create content with Generative AI",
-            content: `
-        GANs have two competing networks:
-        • Generator (creates fake data)
-        • Discriminator (detects fake data)
-      `,
-            duration: "80 min",
-            level: "Advanced",
-            points: 280,
-        },
-        19: {
-            id: 19,
-            title: "Reinforcement Learning",
-            description: "Train agents through trial and error",
-            content: `
-        RL components:
-        • Agent
-        • Environment
-        • State
-        • Action
-        • Reward
-        • Policy
-      `,
-            duration: "70 min",
-            level: "Advanced",
-            points: 250,
-        },
-    };
+    // Quiz States
+    const [isQuizOpen, setIsQuizOpen] = useState(false);
+    const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+    const [selectedOption, setSelectedOption] = useState<number | null>(null);
+    const [quizScores, setQuizScores] = useState<boolean[]>([]);
+    const [quizFinished, setQuizFinished] = useState(false);
 
     useEffect(() => {
         const fetchUserAndModule = async () => {
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
-            if (!currentUser) {
-                router.push("/login");
-                return;
-            }
-            setUser(currentUser);
-
-            // Load module data
-            const moduleData = modulesData[moduleId];
-            if (moduleData) {
-                setModule(moduleData);
-
-                // Check if already completed
-                const { data: progress } = await supabase
-                    .from("user_progress")
-                    .select("completed")
-                    .eq("user_id", currentUser.id)
-                    .eq("module_id", moduleId)
-                    .single();
-
-                if (progress) {
-                    setCompleted(progress.completed);
+            try {
+                const { data: { user: currentUser } } = await supabase.auth.getUser();
+                if (!currentUser) {
+                    router.push("/login");
+                    return;
                 }
-            } else {
-                router.push("/learn");
-            }
+                setUser(currentUser);
 
-            setLoading(false);
+                const moduleData = allModules.find(m => m.id === moduleId);
+                if (moduleData) {
+                    setModule(moduleData);
+
+                    const { data: progress } = await supabase
+                        .from("user_progress")
+                        .select("completed")
+                        .eq("user_id", currentUser.id)
+                        .eq("module_id", moduleId)
+                        .maybeSingle();
+
+                    if (progress) {
+                        setCompleted(progress.completed);
+                    }
+                } else {
+                    router.push("/learn");
+                }
+            } catch (err) {
+                console.error("Initialization error:", err);
+                addToast("Error loading module data", "error");
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchUserAndModule();
-    }, [moduleId, router]);
+    }, [moduleId, router, addToast]);
 
     const handleComplete = async () => {
-        if (!user || !module || completed) return;
+        if (!user || !module || completed || saving) return;
 
-        const { error } = await supabase
-            .from("user_progress")
-            .insert({
-                user_id: user.id,
-                module_id: module.id,
-                module_name: module.title,
-                completed: true,
-                points_earned: module.points,
-                completed_at: new Date().toISOString()
-            });
+        // If there's a quiz and it's not finished, start it
+        if (module.quiz && module.quiz.length > 0 && !quizFinished) {
+            setIsQuizOpen(true);
+            return;
+        }
 
-        if (!error) {
-            // Also add to quiz_scores for points
+        saveProgress();
+    };
+
+    const saveProgress = async () => {
+        setSaving(true);
+        try {
+            const { error: progressError } = await supabase
+                .from("user_progress")
+                .upsert({
+                    user_id: user.id,
+                    module_id: module!.id,
+                    module_name: module!.title,
+                    completed: true,
+                    points_earned: module!.points,
+                    completed_at: new Date().toISOString()
+                }, { onConflict: 'user_id,module_id' });
+
+            if (progressError) throw progressError;
+
             await supabase.from("quiz_scores").insert({
                 user_id: user.id,
-                quiz_id: `module_${module.id}`,
-                score: module.points,
-                total_questions: 1,
-                percentage: 100,
+                quiz_id: `module_${module!.id}`,
+                score: module!.points,
+                total_questions: module!.quiz?.length || 1,
+                percentage: quizFinished ? 100 : 100, // For now simple pass
                 completed_at: new Date().toISOString()
             });
-
+            
             setCompleted(true);
-            setMessage(`✅ Module completed! You earned ${module.points} points!`);
-            setTimeout(() => setMessage(""), 3000);
+            addToast(`Successfully completed: ${module!.title}! +${module!.points} XP`, "success");
+            setMessage(`✅ Module completed! You earned ${module!.points} points!`);
+        } catch (error: any) {
+            console.error("Error saving progress detailed:", error);
+            addToast(`Error saving progress: ${error.message || "DB Error"}`, "error");
+        } finally {
+            setSaving(false);
         }
     };
 
+    const handleQuizOptionSelect = (optionIdx: number) => {
+        if (selectedOption !== null) return;
+        setSelectedOption(optionIdx);
+        
+        const isCorrect = optionIdx === module!.quiz![currentQuestionIdx].correctIndex;
+        const newScores = [...quizScores];
+        newScores[currentQuestionIdx] = isCorrect;
+        setQuizScores(newScores);
+
+        if (isCorrect) {
+            addToast("Correct answer!", "success");
+        } else {
+            addToast("Incorrect. Keep going!", "error");
+        }
+
+        // Auto move to next after 1.5s
+        setTimeout(() => {
+            if (currentQuestionIdx < module!.quiz!.length - 1) {
+                setCurrentQuestionIdx(prev => prev + 1);
+                setSelectedOption(null);
+            } else {
+                setQuizFinished(true);
+                setIsQuizOpen(false);
+                saveProgress();
+            }
+        }, 1500);
+    };
+
     const goToNextModule = () => {
-        if (moduleId < 19) {
+        if (moduleId < allModules.length) {
             router.push(`/learn/${moduleId + 1}`);
         } else {
             router.push("/dashboard");
@@ -447,33 +156,32 @@ print(clf.predict([[160, 1]]))`
     const goToPreviousModule = () => {
         if (moduleId > 1) {
             router.push(`/learn/${moduleId - 1}`);
+        } else {
+            router.push("/learn");
         }
     };
-
-    if (loading) {
-        return (
-            <div className="relative min-h-screen bg-black flex items-center justify-center">
-                <div className="text-white">Loading module...</div>
-            </div>
-        );
-    }
-
-    if (!module) {
-        return (
-            <div className="relative min-h-screen bg-black flex items-center justify-center">
-                <div className="text-white">Module not found</div>
-            </div>
-        );
-    }
 
     const getLevelColor = () => {
+        if (!module) return "text-gray-400 bg-gray-500/10";
         switch (module.level) {
-            case "Beginner": return "text-green-400 bg-green-500/20";
-            case "Intermediate": return "text-yellow-400 bg-yellow-500/20";
-            case "Advanced": return "text-red-400 bg-red-500/20";
-            default: return "text-gray-400 bg-gray-500/20";
+            case "Beginner": return "text-green-400 bg-green-500/10 border-green-500/20";
+            case "Intermediate": return "text-blue-400 bg-blue-500/10 border-blue-500/20";
+            case "Advanced": return "text-red-400 bg-red-500/10 border-red-500/20";
+            default: return "text-gray-400 bg-gray-500/10 border-white/5";
         }
     };
+
+    if (!module && !loading) {
+        return (
+            <div className="relative min-h-screen bg-black flex items-center justify-center text-white">
+                <div className="text-center">
+                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold mb-2">Module Not Found</h2>
+                    <button onClick={() => router.push("/learn")} className="text-purple-400 hover:underline">Return to Learning Paths</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative min-h-screen bg-black text-white">
@@ -481,96 +189,167 @@ print(clf.predict([[160, 1]]))`
             <div className="fixed inset-0 bg-black/40 z-[5]" />
             <div className="relative z-20"><Navbar /></div>
 
-            <div className="relative z-10 max-w-4xl mx-auto px-4 py-8 pt-24">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    {/* Navigation */}
-                    <div className="flex justify-between items-center mb-6">
-                        <button
-                            onClick={goToPreviousModule}
-                            disabled={moduleId === 1}
-                            className="text-purple-400 hover:text-purple-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            ← Previous Module
-                        </button>
-                        <button
-                            onClick={() => router.push("/learn")}
-                            className="text-gray-400 hover:text-white"
-                        >
-                            All Modules
-                        </button>
-                        <button
-                            onClick={goToNextModule}
-                            className="text-purple-400 hover:text-purple-300"
-                        >
-                            Next Module →
-                        </button>
-                    </div>
-
-                    {/* Module Content */}
-                    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-                        <div className="flex justify-between items-start mb-4 flex-wrap gap-4">
-                            <div>
-                                <div className="flex gap-2 mb-3">
-                                    <span className={`text-xs px-2 py-1 rounded ${getLevelColor()}`}>
-                                        {module.level}
-                                    </span>
-                                    <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-400 rounded">
-                                        Module {module.id}/19
-                                    </span>
-                                </div>
-                                <h1 className="text-3xl font-bold mb-2">{module.title}</h1>
-                                <p className="text-gray-400">{module.description}</p>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-2xl font-bold text-purple-400">⭐ {module.points} pts</div>
-                                <div className="text-sm text-gray-400">⏱️ {module.duration}</div>
-                            </div>
+            <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 pt-24 pb-20">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-40">
+                        <div className="relative">
+                            <div className="w-20 h-20 border-4 border-purple-500/10 border-t-purple-500 rounded-full animate-spin" />
+                            <div className="absolute inset-0 w-20 h-20 border-4 border-white/5 rounded-full" />
                         </div>
+                        <p className="mt-8 text-xl font-medium bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent animate-pulse">
+                            Generating your custom learning experience...
+                        </p>
+                    </div>
+                ) : module && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                            {/* Header Navigation */}
+                            <div className="flex items-center justify-between mb-8">
+                                <button onClick={goToPreviousModule} className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                                    <div className="p-2 rounded-full bg-white/5 group-hover:bg-white/10 transition-all"><ChevronLeft className="w-5 h-5" /></div>
+                                    <span className="text-sm font-medium hidden sm:inline">Previous</span>
+                                </button>
+                                <button onClick={() => router.push("/learn")} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-gray-400 hover:text-white hover:border-white/20 transition-all uppercase tracking-widest">
+                                    <Layout className="w-3.5 h-3.5" /> Curriculum
+                                </button>
+                                <button onClick={goToNextModule} className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                                    <span className="text-sm font-medium hidden sm:inline">Next</span>
+                                    <div className="p-2 rounded-full bg-white/5 group-hover:bg-white/10 transition-all"><ChevronRight className="w-5 h-5" /></div>
+                                </button>
+                            </div>
 
-                        {/* Content */}
-                        <div className="prose prose-invert max-w-none mb-6">
-                            <pre className="whitespace-pre-wrap font-sans text-gray-300 leading-relaxed">
-                                {module.content}
-                            </pre>
-                        </div>
+                            {/* Module Header Card */}
+                            <div className="relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 p-8 md:p-12 mb-8 shadow-2xl">
+                                <div className="absolute -top-24 -right-24 w-64 h-64 bg-purple-600/10 blur-[100px] rounded-full" />
+                                <div className="relative z-10">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                                        <div className="space-y-4">
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getLevelColor()}`}>{module.level}</span>
+                                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/5 border border-white/10 text-gray-400">Module {module.id} of {allModules.length}</span>
+                                            </div>
+                                            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">{module.title}</h1>
+                                            <div className="flex items-center gap-6 text-sm text-gray-400">
+                                                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-purple-400" /><span>{module.duration}</span></div>
+                                                <div className="flex items-center gap-2"><Star className="w-4 h-4 text-yellow-400 fill-yellow-400" /><span className="font-bold text-white">{module.points} XP</span></div>
+                                                <div className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-blue-400" /><span>{module.category}</span></div>
+                                            </div>
+                                        </div>
+                                        {completed && (
+                                            <div className="bg-green-500/20 px-6 py-4 rounded-2xl flex flex-col items-center border border-green-500/30">
+                                                <CheckCircle2 className="w-8 h-8 text-green-400 mb-1" />
+                                                <span className="text-xs font-black text-green-400 uppercase tracking-tighter">Completed</span>
+                                            </div>
+                                        )}
+                                    </div>
 
-                        {/* Code Example */}
-                        {module.codeExample && (
-                            <div className="mb-6">
-                                <h3 className="text-lg font-semibold mb-2">💻 Code Example</h3>
-                                <div className="bg-gray-900 rounded-lg overflow-hidden">
-                                    <pre className="p-4 text-sm text-green-400 overflow-x-auto font-mono">
-                                        <code>{module.codeExample}</code>
-                                    </pre>
+                                    {/* Content Section */}
+                                    <div className="bg-black/20 rounded-2xl p-6 md:p-8 border border-white/5 shadow-inner mb-8">
+                                        <pre className="whitespace-pre-wrap font-sans text-gray-300 text-lg leading-relaxed">{module.content}</pre>
+                                    </div>
+
+                                    {/* Code Example */}
+                                    {module.codeExample && (
+                                        <div className="mt-10">
+                                            <div className="flex items-center gap-2 mb-4"><Code2 className="w-5 h-5 text-purple-400" /><h3 className="text-lg font-bold">Interactive Code Preview</h3></div>
+                                            <div className="group relative rounded-2xl overflow-hidden bg-gray-950 border border-white/10 shadow-2xl">
+                                                <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5 text-[10px] text-gray-500 font-mono">
+                                                    <span>main.py</span><span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400">PYTHON 3.x</span>
+                                                </div>
+                                                <pre className="p-6 text-sm text-emerald-400 overflow-x-auto font-mono leading-relaxed"><code>{module.codeExample}</code></pre>
+                                                <button onClick={() => router.push('/playground')} className="absolute bottom-4 right-4 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-lg">Run in Playground</button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Action Button */}
+                                    <div className="mt-12 pt-8 border-t border-white/10 flex flex-col items-center">
+                                        {message && (
+                                            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className={`mb-6 p-4 rounded-xl w-full text-center font-medium ${message.includes('✅') ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                                {message}
+                                            </motion.div>
+                                        )}
+                                        <button
+                                            onClick={handleComplete}
+                                            disabled={completed || saving}
+                                            className={`group relative overflow-hidden px-12 py-4 rounded-2xl font-black text-lg transition-all shadow-2xl ${completed ? "bg-green-500/20 text-green-500 border border-green-500/30 cursor-default" : "bg-white text-black hover:scale-105 active:scale-95 disabled:opacity-50"}`}
+                                        >
+                                            <div className="relative z-10 flex items-center justify-center gap-3">
+                                                {saving ? <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : completed ? <><CheckCircle2 className="w-6 h-6" /> MISSION COMPLETE</> : <>{module.quiz ? 'TAKE KNOWLEDGE QUIZ' : 'FINISH MODULE & EARN XP'}</>}
+                                            </div>
+                                            {!completed && !saving && <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 opacity-0 group-hover:opacity-20 transition-opacity" />}
+                                        </button>
+                                        {!completed && <p className="mt-4 text-[10px] text-gray-500 uppercase tracking-widest font-bold">Earn {module.points} points for validation</p>}
+                                    </div>
                                 </div>
                             </div>
-                        )}
+                        </motion.div>
 
-                        {/* Message */}
-                        {message && (
-                            <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400">
-                                {message}
-                            </div>
-                        )}
+                        {/* Quiz Modal Overlay */}
+                        <AnimatePresence>
+                            {isQuizOpen && module.quiz && (
+                                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsQuizOpen(false)} className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+                                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-lg bg-gray-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+                                        <div className="p-8">
+                                            <div className="flex justify-between items-center mb-8">
+                                                <div className="flex items-center gap-2 text-purple-400 font-bold uppercase tracking-widest text-xs">
+                                                    <HelpCircle className="w-4 h-4" /> Question {currentQuestionIdx + 1}/{module.quiz.length}
+                                                </div>
+                                                <button onClick={() => setIsQuizOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                                            </div>
 
-                        {/* Complete Button */}
-                        {!completed ? (
-                            <button
-                                onClick={handleComplete}
-                                className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg font-semibold hover:shadow-lg transition"
-                            >
-                                ✓ Mark as Complete & Earn {module.points} Points
-                            </button>
-                        ) : (
-                            <div className="text-center p-3 bg-green-500/20 rounded-lg text-green-400">
-                                ✓ Module Completed! You earned {module.points} points.
-                            </div>
+                                            <h2 className="text-xl font-bold mb-8 leading-tight">{module.quiz[currentQuestionIdx].question}</h2>
+                                            
+                                            <div className="space-y-3">
+                                                {module.quiz[currentQuestionIdx].options.map((option, idx) => {
+                                                    const isSelected = selectedOption === idx;
+                                                    const isCorrect = idx === module.quiz![currentQuestionIdx].correctIndex;
+                                                    const showResult = selectedOption !== null;
+
+                                                    return (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => handleQuizOptionSelect(idx)}
+                                                            className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between group ${
+                                                                isSelected 
+                                                                    ? (isCorrect ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'bg-red-500/20 border-red-500/50 text-red-400')
+                                                                    : (showResult && isCorrect ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:bg-white/10')
+                                                            }`}
+                                                        >
+                                                            <span className="font-medium">{option}</span>
+                                                            {isSelected && (isCorrect ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />)}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            
+                                            <div className="mt-8 flex gap-1">
+                                                {module.quiz.map((_, i) => (
+                                                    <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i === currentQuestionIdx ? 'bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]' : i < currentQuestionIdx ? 'bg-green-500' : 'bg-white/10'}`} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Auto-Next Suggestion */}
+                        {completed && moduleId < allModules.length && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center">
+                                <button onClick={goToNextModule} className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold transition-all shadow-xl shadow-purple-500/20 hover:scale-105 active:scale-95 group">
+                                    NEXT MODULE: {allModules.find(m => m.id === moduleId + 1)?.title}
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </motion.div>
                         )}
-                    </div>
-                </motion.div>
+                    </>
+                )}
             </div>
         </div>
     );

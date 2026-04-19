@@ -221,7 +221,7 @@ export async function getLeaderboard(limit: number = 100) {
         score,
         user_id,
         profiles!inner (
-          full_name,
+          username,
           email
         )
       `);
@@ -236,7 +236,7 @@ export async function getLeaderboard(limit: number = 100) {
                 userScores[item.user_id] = {
                     user_id: item.user_id,
                     email: item.profiles.email,
-                    full_name: item.profiles.full_name || item.profiles.email.split('@')[0],
+                    full_name: item.profiles.username || item.profiles.email.split('@')[0],
                     total_score: 0,
                     quiz_count: 0,
                 };

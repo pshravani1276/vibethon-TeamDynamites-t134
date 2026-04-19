@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, Github, Chrome, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, GitFork, Globe, Loader2, Sparkles, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -227,11 +227,11 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <button className="flex items-center justify-center space-x-3 bg-white/5 border border-white/10 rounded-2xl py-3 text-white hover:bg-white/10 transition-all duration-300 group">
-                <Github size={18} className="group-hover:rotate-12 transition-transform" />
+                <GitFork size={18} className="group-hover:rotate-12 transition-transform" />
                 <span className="text-sm font-semibold">GitHub</span>
               </button>
               <button className="flex items-center justify-center space-x-3 bg-white/5 border border-white/10 rounded-2xl py-3 text-white hover:bg-white/10 transition-all duration-300 group">
-                <Chrome size={18} className="group-hover:scale-110 transition-transform" />
+                <Globe size={18} className="group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-semibold">Google</span>
               </button>
             </div>

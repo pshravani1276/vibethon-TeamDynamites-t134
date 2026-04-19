@@ -143,37 +143,37 @@ export default function ProgressPage() {
             <div className="fixed inset-0 bg-black/40 z-[5]" />
             <div className="relative z-20"><Navbar /></div>
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 pt-24">
+            <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-8 pt-20 sm:pt-24">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
                     {/* Header */}
-                    <div className="text-center mb-12">
-                        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+                    <div className="text-center mb-8 sm:mb-12">
+                        <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-3 sm:mb-4">
                             Your Learning Progress
                         </h1>
-                        <p className="text-gray-300 text-lg">Track your journey to becoming an AI/ML expert</p>
+                        <p className="text-gray-300 text-sm sm:text-lg">Track your journey to becoming an AI/ML expert</p>
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-6 text-center border border-white/10">
                             <div className="text-3xl mb-2">⭐</div>
                             <div className="text-2xl font-bold text-purple-400">{progress.totalPoints}</div>
                             <div className="text-gray-400 text-sm">Total Points</div>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-6 text-center border border-white/10">
                             <div className="text-3xl mb-2">📚</div>
                             <div className="text-2xl font-bold text-purple-400">{progress.completedModules}/{progress.totalModules}</div>
                             <div className="text-gray-400 text-sm">Modules Completed</div>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-6 text-center border border-white/10">
                             <div className="text-3xl mb-2">📝</div>
                             <div className="text-2xl font-bold text-purple-400">{progress.quizAverage}%</div>
                             <div className="text-gray-400 text-sm">Quiz Average</div>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-6 text-center border border-white/10">
                             <div className="text-3xl mb-2">🔥</div>
                             <div className="text-2xl font-bold text-purple-400">{progress.streak}</div>
                             <div className="text-gray-400 text-sm">Day Streak</div>
@@ -181,7 +181,7 @@ export default function ProgressPage() {
                     </div>
 
                     {/* Overall Progress Bar */}
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 mb-8">
+                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/10 mb-6 sm:mb-8">
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-gray-300 font-semibold">Overall Progress</span>
                             <span className="text-purple-400">{Math.round(overallPercentage)}%</span>
@@ -195,7 +195,7 @@ export default function ProgressPage() {
                     </div>
 
                     {/* Level Progress Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
                             <div className="flex items-center gap-2 mb-3">
                                 <span className="text-2xl">🌱</span>
@@ -249,9 +249,9 @@ export default function ProgressPage() {
                     </div>
 
                     {/* Weekly Activity Chart */}
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 mb-8">
-                        <h3 className="text-xl font-semibold mb-4">📊 Weekly Activity</h3>
-                        <div className="flex items-end justify-between gap-2 h-48">
+                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/10 mb-6 sm:mb-8">
+                        <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">📊 Weekly Activity</h3>
+                        <div className="flex items-end justify-between gap-1 sm:gap-2 h-36 sm:h-48">
                             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
                                 <div key={day} className="flex-1 text-center">
                                     <div
@@ -266,7 +266,7 @@ export default function ProgressPage() {
                     </div>
 
                     {/* Recent Activity & Badges */}
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                         {/* Recent Activity */}
                         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
                             <h3 className="text-xl font-semibold mb-4">🕐 Recent Activity</h3>

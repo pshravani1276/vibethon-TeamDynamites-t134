@@ -7,88 +7,16 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { supabase } from "@/lib/supabaseClient";
-
-interface Module {
-    id: number;
-    title: string;
-    description: string;
-    duration: string;
-    level: string;
-    completed: boolean;
-    points: number;
-    category: string;
-}
+import { modules as allModules } from "@/lib/data/modules";
+import { Rocket, Star, Clock, CheckCircle2, Award, ArrowUpCircle } from "lucide-react";
 
 export default function IntermediateLearningPage() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
-    const [selectedModule, setSelectedModule] = useState<number | null>(null);
-    const [showContent, setShowContent] = useState(false);
-    const [message, setMessage] = useState("");
-    const [modules, setModules] = useState<Module[]>([
-        {
-            id: 1,
-            title: "Data Preprocessing & Cleaning",
-            description: "Learn how to prepare raw data for machine learning models",
-            duration: "35 min",
-            level: "Intermediate",
-            completed: false,
-            points: 100,
-            category: "Data Preparation"
-        },
-        {
-            id: 2,
-            title: "Feature Engineering",
-            description: "Transform raw data into meaningful features for better model performance",
-            duration: "40 min",
-            level: "Intermediate",
-            completed: false,
-            points: 120,
-            category: "Feature Engineering"
-        },
-        {
-            id: 3,
-            title: "Linear Regression Deep Dive",
-            description: "Master the fundamentals of linear regression and its variants",
-            duration: "45 min",
-            level: "Intermediate",
-            completed: false,
-            points: 150,
-            category: "Regression"
-        },
-        {
-            id: 4,
-            title: "Logistic Regression & Classification",
-            description: "Learn binary and multi-class classification algorithms",
-            duration: "45 min",
-            level: "Intermediate",
-            completed: false,
-            points: 150,
-            category: "Classification"
-        },
-        {
-            id: 5,
-            title: "Decision Trees & Random Forests",
-            description: "Build powerful tree-based models for classification and regression",
-            duration: "50 min",
-            level: "Intermediate",
-            completed: false,
-            points: 150,
-            category: "Ensemble Methods"
-        },
-        {
-            id: 6,
-            title: "Model Evaluation & Validation",
-            description: "Learn to assess model performance and avoid overfitting",
-            duration: "40 min",
-            level: "Intermediate",
-            completed: false,
-            points: 120,
-            category: "Model Evaluation"
-        }
-    ]);
-
-    const [totalPoints, setTotalPoints] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
+    
+    const intermediateModules = allModules.filter(m => m.level === "Intermediate");
 
     useEffect(() => {
         const fetchUserAndProgress = async () => {
@@ -100,450 +28,26 @@ export default function IntermediateLearningPage() {
             setUser(currentUser);
 
             // Fetch user's completed modules
-            const { data: completedModules } = await supabase
+            const { data: progress } = await supabase
                 .from("user_progress")
                 .select("module_id")
                 .eq("user_id", currentUser.id)
                 .eq("completed", true);
 
-            if (completedModules) {
-                const completedIds = new Set(completedModules.map((m: any) => m.module_id));
-                setModules(prev => prev.map(module => ({
-                    ...module,
-                    completed: completedIds.has(module.id)
-                })));
+            if (progress) {
+                setCompletedIds(new Set(progress.map((m: any) => m.module_id)));
             }
-
-            // Fetch total points
-            const { data: quizScores } = await supabase
-                .from("quiz_scores")
-                .select("score")
-                .eq("user_id", currentUser.id);
-
-            if (quizScores) {
-                const total = quizScores?.reduce((sum: number, q: any) => sum + (q.score || 0), 0) || 0;
-                setTotalPoints(total);
-            }
+            setLoading(false);
         };
 
         fetchUserAndProgress();
     }, [router]);
 
-    const moduleContent = {
-        1: {
-            title: "Data Preprocessing & Cleaning",
-            content: `
-        Data preprocessing is crucial for building effective machine learning models. Real-world data is often messy and requires cleaning.
-
-        Key Steps in Data Preprocessing:
-
-        1. Handling Missing Values
-        • Remove rows with missing values
-        • Fill with mean/median/mode
-        • Forward fill or backward fill
-        \`\`\`python
-        # Fill missing values with mean
-        df.fillna(df.mean(), inplace=True)
-        \`\`\`
-
-        2. Handling Outliers
-        • Use Z-score method
-        • Use IQR (Interquartile Range)
-        • Cap or remove extreme values
-        \`\`\`python
-        # Remove outliers using Z-score
-        from scipy import stats
-        df = df[(np.abs(stats.zscore(df)) < 3).all(axis=1)]
-        \`\`\`
-
-        3. Data Transformation
-        • Scaling (Min-Max, Standardization)
-        • Normalization
-        • Log transformation for skewed data
-        \`\`\`python
-        from sklearn.preprocessing import StandardScaler
-        scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(data)
-        \`\`\`
-
-        4. Encoding Categorical Variables
-        • Label Encoding
-        • One-Hot Encoding
-        \`\`\`python
-        from sklearn.preprocessing import OneHotEncoder
-        encoder = OneHotEncoder()
-        encoded = encoder.fit_transform(categorical_data)
-        \`\`\`
-      `,
-        },
-        2: {
-            title: "Feature Engineering",
-            content: `
-        Feature engineering is the art of creating new features from existing data to improve model performance.
-
-        Techniques for Feature Engineering:
-
-        1. Creating Interaction Features
-        • Multiply or add features together
-        • Capture relationships between variables
-        \`\`\`python
-        df['interaction'] = df['feature1'] * df['feature2']
-        \`\`\`
-
-        2. Polynomial Features
-        • Add squared, cubed terms
-        • Capture non-linear relationships
-        \`\`\`python
-        from sklearn.preprocessing import PolynomialFeatures
-        poly = PolynomialFeatures(degree=2)
-        poly_features = poly.fit_transform(X)
-        \`\`\`
-
-        3. Domain-Specific Features
-        • Extract date components (day, month, year)
-        • Create ratios or percentages
-        • Aggregate by groups
-        \`\`\`python
-        df['hour'] = pd.to_datetime(df['timestamp']).dt.hour
-        df['day_of_week'] = pd.to_datetime(df['timestamp']).dt.dayofweek
-        \`\`\`
-
-        4. Binning/Discretization
-        • Convert continuous variables to categorical
-        • Group values into buckets
-        \`\`\`python
-        df['age_group'] = pd.cut(df['age'], bins=[0,18,35,60,100], 
-                                 labels=['Child','Young','Adult','Senior'])
-        \`\`\`
-      `,
-        },
-        3: {
-            title: "Linear Regression Deep Dive",
-            content: `
-        Linear regression is the foundation of many machine learning algorithms.
-
-        Mathematical Foundation:
-        y = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ + ε
-
-        Where:
-        • y is the target variable
-        • β₀ is the intercept
-        • β₁...βₙ are coefficients
-        • x₁...xₙ are features
-        • ε is the error term
-
-        Assumptions of Linear Regression:
-        1. Linearity: Relationship between X and Y is linear
-        2. Independence: Observations are independent
-        3. Homoscedasticity: Constant variance of errors
-        4. Normality: Errors are normally distributed
-
-        Implementation:
-        \`\`\`python
-        from sklearn.linear_model import LinearRegression
-        from sklearn.model_selection import train_test_split
-        
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-        
-        # Train model
-        model = LinearRegression()
-        model.fit(X_train, y_train)
-        
-        # Make predictions
-        predictions = model.predict(X_test)
-        
-        # Evaluate
-        from sklearn.metrics import r2_score, mean_squared_error
-        print(f"R² Score: {r2_score(y_test, predictions)}")
-        print(f"RMSE: {np.sqrt(mean_squared_error(y_test, predictions))}")
-        \`\`\`
-
-        Regularization Techniques:
-        • Ridge Regression (L2): Adds penalty on squared coefficients
-        • Lasso Regression (L1): Adds penalty on absolute coefficients
-        • Elastic Net: Combines both L1 and L2 penalties
-      `,
-        },
-        4: {
-            title: "Logistic Regression & Classification",
-            content: `
-        Logistic regression is used for binary and multi-class classification problems.
-
-        How it Works:
-        1. Linear combination of inputs
-        2. Apply sigmoid function to map output to probability
-        3. Threshold at 0.5 for classification
-
-        Sigmoid Function:
-        P(y=1) = 1 / (1 + e^-(β₀ + β₁x₁ + ... + βₙxₙ))
-
-        Implementation:
-        \`\`\`python
-        from sklearn.linear_model import LogisticRegression
-        from sklearn.metrics import classification_report, confusion_matrix
-        
-        # Create and train model
-        model = LogisticRegression()
-        model.fit(X_train, y_train)
-        
-        # Predict probabilities
-        probabilities = model.predict_proba(X_test)
-        
-        # Make predictions
-        predictions = model.predict(X_test)
-        
-        # Evaluate
-        print(classification_report(y_test, predictions))
-        print(confusion_matrix(y_test, predictions))
-        \`\`\`
-
-        Evaluation Metrics for Classification:
-        • Accuracy: (TP + TN) / (TP + TN + FP + FN)
-        • Precision: TP / (TP + FP)
-        • Recall: TP / (TP + FN)
-        • F1-Score: 2 * (Precision * Recall) / (Precision + Recall)
-        • ROC-AUC: Area under ROC curve
-
-        Multi-class Classification:
-        • One-vs-Rest (OvR)
-        • One-vs-One (OvO)
-        • Softmax Regression (Multinomial)
-      `,
-        },
-        5: {
-            title: "Decision Trees & Random Forests",
-            content: `
-        Decision trees are intuitive models that make decisions based on asking a series of questions.
-
-        How Decision Trees Work:
-        1. Select the best feature to split data
-        2. Split data into subsets
-        3. Repeat recursively until stopping criteria met
-
-        Splitting Criteria:
-        • Gini Impurity: 1 - Σ(pᵢ)²
-        • Entropy: -Σ pᵢ log(pᵢ)
-        • Information Gain: Entropy(parent) - Σ(weighted entropy of children)
-
-        Implementation:
-        \`\`\`python
-        from sklearn.tree import DecisionTreeClassifier
-        from sklearn.ensemble import RandomForestClassifier
-        
-        # Single Decision Tree
-        dt = DecisionTreeClassifier(max_depth=5)
-        dt.fit(X_train, y_train)
-        
-        # Random Forest (Ensemble of Trees)
-        rf = RandomForestClassifier(n_estimators=100, max_depth=10)
-        rf.fit(X_train, y_train)
-        
-        # Feature importance
-        importance = rf.feature_importances_
-        \`\`\`
-
-        Advantages of Random Forests:
-        • Reduces overfitting
-        • Handles non-linear relationships
-        • Provides feature importance
-        • Works well with high-dimensional data
-
-        Hyperparameter Tuning:
-        • n_estimators: Number of trees
-        • max_depth: Maximum tree depth
-        • min_samples_split: Minimum samples to split
-        • min_samples_leaf: Minimum samples at leaf
-      `,
-        },
-        6: {
-            title: "Model Evaluation & Validation",
-            content: `
-        Proper model evaluation ensures your model generalizes well to new data.
-
-        Cross-Validation Techniques:
-
-        1. K-Fold Cross Validation
-        • Split data into K folds
-        • Train on K-1 folds, validate on 1 fold
-        • Repeat K times
-        \`\`\`python
-        from sklearn.model_selection import cross_val_score
-        
-        scores = cross_val_score(model, X, y, cv=5)
-        print(f"Mean accuracy: {scores.mean():.2f}")
-        \`\`\`
-
-        2. Stratified K-Fold
-        • Maintains class distribution in each fold
-        • Better for imbalanced datasets
-
-        3. Leave-One-Out (LOO)
-        • Train on all but one sample
-        • Very computationally expensive
-
-        Bias-Variance Tradeoff:
-        • High Bias: Underfitting (too simple)
-        • High Variance: Overfitting (too complex)
-        • Goal: Find sweet spot
-
-        Learning Curves:
-        \`\`\`python
-        from sklearn.model_selection import learning_curve
-        
-        train_sizes, train_scores, val_scores = learning_curve(
-            model, X, y, cv=5, train_sizes=np.linspace(0.1, 1.0, 10)
-        )
-        \`\`\`
-
-        Validation Strategies:
-        • Holdout validation (train/test split)
-        • Cross-validation
-        • Time series validation (for temporal data)
-      `,
-        },
-    };
-
-    const handleModuleClick = (moduleId: number) => {
-        setSelectedModule(moduleId);
-        setShowContent(true);
-    };
-
-    const handleBack = () => {
-        setSelectedModule(null);
-        setShowContent(false);
-        setMessage("");
-    };
-
-    const handleComplete = async () => {
-        if (!selectedModule || !user) return;
-
-        const module = modules[selectedModule - 1];
-
-        if (module.completed) {
-            setMessage("You've already completed this module!");
-            setTimeout(() => setMessage(""), 3000);
-            return;
-        }
-
-        try {
-            const { error: progressError } = await supabase
-                .from("user_progress")
-                .insert({
-                    user_id: user.id,
-                    module_id: selectedModule,
-                    module_name: module.title,
-                    completed: true,
-                    points_earned: module.points,
-                    completed_at: new Date().toISOString()
-                });
-
-            if (progressError) throw progressError;
-
-            const { error: scoreError } = await supabase
-                .from("quiz_scores")
-                .insert({
-                    user_id: user.id,
-                    quiz_id: `intermediate_module_${selectedModule}`,
-                    score: module.points,
-                    total_questions: 1,
-                    percentage: 100,
-                    completed_at: new Date().toISOString()
-                });
-
-            if (scoreError) throw scoreError;
-
-            setModules(prev => prev.map(m =>
-                m.id === selectedModule ? { ...m, completed: true } : m
-            ));
-            setTotalPoints(prev => prev + module.points);
-            setMessage(`✅ Module completed! You earned ${module.points} points!`);
-
-            setTimeout(() => {
-                setShowContent(false);
-                setSelectedModule(null);
-                setMessage("");
-            }, 2000);
-
-        } catch (error) {
-            console.error("Error saving progress:", error);
-            setMessage("❌ Error saving progress. Please try again.");
-            setTimeout(() => setMessage(""), 3000);
-        }
-    };
-
-    if (showContent && selectedModule) {
-        const content = moduleContent[selectedModule as keyof typeof moduleContent];
-        const module = modules[selectedModule - 1];
-
-        return (
-            <div className="relative min-h-screen bg-black text-white">
-                <AnimatedBackground />
-                <div className="fixed inset-0 bg-black/40 z-[5]" />
-                <div className="relative z-20"><Navbar /></div>
-
-                <div className="relative z-10 max-w-4xl mx-auto px-4 py-8 pt-24">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                    >
-                        <button
-                            onClick={handleBack}
-                            className="mb-6 text-purple-400 hover:text-purple-300 flex items-center gap-2"
-                        >
-                            ← Back to Modules
-                        </button>
-
-                        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-                            <div className="flex justify-between items-start mb-4">
-                                <h1 className="text-3xl font-bold">{content.title}</h1>
-                                <span className="text-sm px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full">
-                                    {module.category}
-                                </span>
-                            </div>
-                            <div className="flex gap-4 mb-6 text-sm">
-                                <span className="text-purple-400">⭐ {module.points} points</span>
-                                <span className="text-gray-400">⏱️ {module.duration}</span>
-                            </div>
-
-                            <div className="prose prose-invert max-w-none">
-                                <pre className="whitespace-pre-wrap font-sans text-gray-300 leading-relaxed">
-                                    {content.content}
-                                </pre>
-                            </div>
-
-                            {message && (
-                                <div className={`mt-4 p-3 rounded-lg ${message.includes("✅") ? "bg-green-500/20 text-green-400" :
-                                    message.includes("❌") ? "bg-red-500/20 text-red-400" :
-                                        "bg-blue-500/20 text-blue-400"
-                                    }`}>
-                                    {message}
-                                </div>
-                            )}
-
-                            <div className="mt-8 pt-6 border-t border-gray-700">
-                                <button
-                                    onClick={handleComplete}
-                                    disabled={module.completed}
-                                    className={`w-full py-3 rounded-lg font-semibold transition-all ${module.completed
-                                        ? "bg-gray-600 cursor-not-allowed"
-                                        : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
-                                        }`}
-                                >
-                                    {module.completed ? "✓ Completed" : "✓ Mark as Complete & Earn Points"}
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            </div>
-        );
-    }
-
-    const completedCount = modules.filter(m => m.completed).length;
-    const totalPointsEarned = modules
-        .filter(m => m.completed)
+    const completedCount = intermediateModules.filter(m => completedIds.has(m.id)).length;
+    const totalPointsEarned = intermediateModules
+        .filter(m => completedIds.has(m.id))
         .reduce((sum, m) => sum + m.points, 0);
+    const progressPercent = Math.round((completedCount / intermediateModules.length) * 100);
 
     return (
         <div className="relative min-h-screen bg-black text-white">
@@ -558,150 +62,152 @@ export default function IntermediateLearningPage() {
                 >
                     {/* Header */}
                     <div className="text-center mb-12">
-                        <div className="inline-block px-4 py-1 bg-blue-500/20 rounded-full text-blue-400 text-sm mb-4">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm mb-4">
+                            <Rocket className="w-4 h-4" />
                             Intermediate Level
                         </div>
-                        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
-                            Intermediate Learning Path
+                        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+                            Practical Machine Learning
                         </h1>
-                        <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-                            Deepen your understanding with advanced ML concepts and practical implementations
+                        <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                            Go beyond the basics. Master data cleaning, feature engineering, and core classification algorithms.
                         </p>
                     </div>
 
-                    {/* Stats Overview */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
-                            <div className="text-2xl mb-2">📚</div>
-                            <div className="text-2xl font-bold text-purple-400">{completedCount}/{modules.length}</div>
-                            <div className="text-gray-400">Modules Completed</div>
-                        </div>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
-                            <div className="text-2xl mb-2">⭐</div>
-                            <div className="text-2xl font-bold text-purple-400">{totalPointsEarned}</div>
-                            <div className="text-gray-400">Points Earned</div>
-                        </div>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
-                            <div className="text-2xl mb-2">🏆</div>
-                            <div className="text-2xl font-bold text-purple-400">
-                                {Math.round((completedCount / modules.length) * 100)}%
+                    {/* Stats & Progress */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+                        <div className="md:col-span-3 bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 flex flex-col justify-center">
+                            <div className="flex justify-between items-end mb-4">
+                                <span className="text-gray-400 font-medium">Learning Path Progress</span>
+                                <span className="text-2xl font-bold text-blue-400">{progressPercent}%</span>
                             </div>
-                            <div className="text-gray-400">Progress</div>
-                        </div>
-                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10">
-                            <div className="text-2xl mb-2">🎯</div>
-                            <div className="text-2xl font-bold text-purple-400">
-                                {modules.filter(m => m.completed).length * 100}
+                            <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progressPercent}%` }}
+                                    transition={{ duration: 1, ease: "easeOut" }}
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                                />
                             </div>
-                            <div className="text-gray-400">XP Gained</div>
+                            <div className="flex justify-between mt-3 text-xs text-gray-500 font-mono">
+                                <span>BASICS</span>
+                                <span>{completedCount} / {intermediateModules.length} MODULES COMPLETED</span>
+                                <span>ADVANCED</span>
+                            </div>
+                        </div>
+                        <div className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 backdrop-blur-md rounded-2xl p-6 border border-blue-500/30 flex flex-col items-center justify-center text-center">
+                            <Award className="w-10 h-10 text-blue-400 mb-2" />
+                            <div className="text-2xl font-bold text-white">{totalPointsEarned}</div>
+                            <div className="text-xs text-blue-300 font-medium uppercase tracking-wider">XP Earned</div>
                         </div>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 mb-8">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-gray-300">Intermediate Path Progress</span>
-                            <span className="text-purple-400">{completedCount}/{modules.length} Modules</span>
+                    {/* Modules Grid */}
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-64 bg-white/5 rounded-2xl border border-white/10 animate-pulse" />
+                            ))}
                         </div>
-                        <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
-                                style={{ width: `${(completedCount / modules.length) * 100}%` }}
-                            />
-                        </div>
-                    </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {intermediateModules.map((module, idx) => {
+                                const isCompleted = completedIds.has(module.id);
+                                return (
+                                    <motion.div
+                                        key={module.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.1 }}
+                                        onClick={() => router.push(`/learn/${module.id}`)}
+                                        className={`group relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border transition-all cursor-pointer overflow-hidden ${
+                                            isCompleted
+                                                ? "border-green-500/30 bg-green-500/5 hover:bg-green-500/10"
+                                                : "border-white/10 hover:border-blue-500/40 hover:bg-white/10 shadow-xl hover:shadow-blue-500/5"
+                                        }`}
+                                    >
+                                        {/* Background Decoration */}
+                                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                            <Rocket className="w-24 h-24" />
+                                        </div>
 
-                    {/* Message Display */}
-                    {message && (
-                        <div className="mb-6 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 text-center">
-                            {message}
+                                        <div className="relative z-10">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className={`p-2 rounded-xl ${isCompleted ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                                                    {isCompleted ? <CheckCircle2 className="w-6 h-6" /> : <Rocket className="w-6 h-6" />}
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-sm font-bold text-blue-400">+{module.points} XP</div>
+                                                    <div className="flex items-center gap-1 text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                                                        <Clock className="w-3 h-3" />
+                                                        {module.duration}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <h3 className="text-xl font-bold mb-2 group-hover:text-blue-300 transition-colors">{module.title}</h3>
+                                            <p className="text-gray-400 text-sm mb-6 line-clamp-2 leading-relaxed">
+                                                {module.description}
+                                            </p>
+
+                                            <div className="flex items-center justify-between mt-auto">
+                                                <span className={`text-[10px] px-2 py-1 rounded-md border uppercase tracking-tighter font-black ${
+                                                    isCompleted 
+                                                        ? 'bg-green-500/10 border-green-500/20 text-green-500' 
+                                                        : 'bg-white/5 border-white/10 text-gray-400'
+                                                }`}>
+                                                    {module.category}
+                                                </span>
+                                                <button className={`text-sm font-bold flex items-center gap-1 ${isCompleted ? 'text-green-400' : 'text-blue-400 group-hover:translate-x-1 transition-transform'}`}>
+                                                    {isCompleted ? "Review" : "Start Now"} →
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </div>
                     )}
 
-                    {/* Modules Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {modules.map((module, idx) => (
-                            <motion.div
-                                key={module.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.1 }}
-                                className={`bg-white/5 backdrop-blur-sm rounded-xl p-6 border transition-all cursor-pointer ${module.completed
-                                    ? "border-green-500/50 hover:border-green-500/70"
-                                    : "border-white/10 hover:border-purple-500/30"
-                                    }`}
-                                onClick={() => !module.completed && handleModuleClick(module.id)}
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="text-3xl">
-                                        {module.completed ? "✅" : "📘"}
-                                    </div>
-                                    <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full">
-                                        ⭐ {module.points} pts
-                                    </span>
-                                </div>
-                                <h3 className="text-xl font-semibold mb-2">{module.title}</h3>
-                                <p className="text-gray-400 text-sm mb-3">{module.description}</p>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full">
-                                        {module.category}
-                                    </span>
-                                    <span className="text-xs text-gray-500">⏱️ {module.duration}</span>
-                                </div>
-                                {!module.completed && (
-                                    <button className="mt-4 w-full py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg text-sm transition-all">
-                                        Start Learning →
-                                    </button>
-                                )}
-                                {module.completed && (
-                                    <div className="mt-4 text-center text-sm text-green-400">
-                                        ✓ Completed • {module.points} XP Earned
-                                    </div>
-                                )}
-                            </motion.div>
-                        ))}
-                    </div>
-
-                    {/* Prerequisites Note */}
-                    <div className="mt-8 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                        <div className="flex gap-3">
-                            <span className="text-xl">📋</span>
-                            <div>
-                                <h4 className="font-semibold text-yellow-400">Prerequisites</h4>
-                                <p className="text-sm text-gray-300">
-                                    Complete the Beginner Learning Path before starting Intermediate modules.
-                                    Basic knowledge of Python and statistics is recommended.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Completion Certificate */}
-                    {completedCount === modules.length && (
+                    {/* Completion Reward */}
+                    {completedCount === intermediateModules.length && (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="mt-8 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 rounded-xl p-6 border border-yellow-500/30 text-center"
+                            className="mt-12 p-8 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-3xl border border-blue-500/30 text-center relative overflow-hidden"
                         >
-                            <div className="text-4xl mb-2">🏆🎉</div>
-                            <h3 className="text-xl font-bold mb-2">Congratulations, ML Practitioner!</h3>
-                            <p className="text-gray-300 mb-2">You've completed all Intermediate modules!</p>
-                            <p className="text-purple-400 mb-4">Total Points Earned: {totalPointsEarned}</p>
-                            <p className="text-sm text-gray-400 mb-4">You are now ready for Advanced concepts!</p>
-                            <div className="flex gap-4 justify-center">
-                                <button className="px-6 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg font-semibold">
-                                    Download Certificate
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500" />
+                            <div className="text-5xl mb-4">🚀</div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Intermediate Path Complete!</h3>
+                            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                                You've mastered the core tools of a Data Scientist. Now it's time to dive into Deep Learning and Neural Networks!
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-4">
+                                <button className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl font-bold hover:shadow-lg hover:shadow-blue-500/20 transition-all">
+                                    Claim Badge
                                 </button>
-                                <button
+                                <button 
                                     onClick={() => router.push("/learn/advanced")}
-                                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg font-semibold"
+                                    className="px-8 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all"
                                 >
-                                    Continue to Advanced →
+                                    Advanced Path →
                                 </button>
                             </div>
                         </motion.div>
                     )}
                 </motion.div>
+
+                {/* Prerequisites Note */}
+                <div className="mt-8 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl p-6 flex items-start gap-4">
+                    <div className="p-2 bg-yellow-500/20 rounded-lg text-yellow-400 text-xl flex-shrink-0">⚠️</div>
+                    <div>
+                        <h4 className="font-bold text-yellow-400 mb-1">Prerequisites Check</h4>
+                        <p className="text-sm text-gray-400 leading-relaxed">
+                            We recommend completing the <Link href="/learn/beginner" className="text-yellow-400/80 hover:text-yellow-400 underline">Beginner Path</Link> first. 
+                            Ensure you have a basic understanding of Python, NumPy, and Pandas before starting these modules.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     );
